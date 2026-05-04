@@ -1,0 +1,24 @@
+.zoom-slider {
+    -webkit-appearance: none;
+    position: absolute;
+    right: 140px;
+    bottom: 18px;
+    background: rgb(102, 102, 102);
+    color: rgb(207, 207, 207);
+}
+
+.zoom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width : 10px;
+    height: 20px;
+    background: rgb(216, 216, 216);
+    cursor: pointer;
+}
+
+.zoom-slider::-moz-range-thumb {
+  width: 10px;
+  height: 20px;
+  background: rgb(216, 216, 216);
+  cursor: pointer;
+}

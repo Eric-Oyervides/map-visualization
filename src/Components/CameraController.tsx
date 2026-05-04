@@ -3,13 +3,26 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, OrbitControls, SoftShadows, useGLTF, useHelper } from '@react-three/drei';
 import { useState, useRef, Suspense, useEffect, forwardRef } from 'react';
 
+
+export type CamCommand = 
+    | null
+    | 'up'
+    | 'down'
+    | 'left'
+    | 'right'
+    | 'up-left'
+    | 'up-right'
+    | 'down-left'
+    | 'down-right';
+
 type CameraProps = {
-    command : null | 'up' | 'down' | 'left' | 'right'
-    floor : number
-    zoom : number
+    command : CamCommand;
+    floor : number;
+    zoom : number;
+    orbitEnabled?: boolean;
 }
 
-export function CameraController({command, floor, zoom} : CameraProps) {
+export function CameraController({command, floor, zoom, orbitEnabled = true} : CameraProps) {
     const {camera, gl, scene} = useThree();
     //const [camTarget, setCamTarget] = useState<[number, number, number]>([0,0,0]); 
     const [lockTarget, setLockTarget] = useState(true);
@@ -46,15 +59,20 @@ export function CameraController({command, floor, zoom} : CameraProps) {
     useFrame((state, delta) => {
         const diff = 23;
 
-        if (command){
+        if (command) {
             const controls = controlsRef.current;
             controls.enabled = false;
-            
-            camera.position.add(calculateDir(diff, delta))
-            
+
+            camera.position.add(calculateDir(diff, delta));
+
             setLockTarget(false);
-        }
-        else {
+        } else {
+            const controls = controlsRef.current;
+
+            if (controls) {
+                controls.enabled = orbitEnabled;
+            }
+
             updateTarget();
         }
 
@@ -131,32 +149,60 @@ export function CameraController({command, floor, zoom} : CameraProps) {
     
 
 
-    const calculateDir = (diff:number, delta: number) => {
-        const relDir : THREE.Vector3 = new THREE.Vector3();
+    const calculateDir = (diff: number, delta: number) => {
+        const relDir = new THREE.Vector3();
         camera.getWorldDirection(relDir);
 
         const up = camera.up.clone();
+
         const right = new THREE.Vector3();
-        right.crossVectors(relDir, up).normalize;
+        right.crossVectors(relDir, up).normalize();
 
         const front = new THREE.Vector3();
+        front.crossVectors(right, new THREE.Vector3(0, 1, 0)).normalize();
 
-        switch (command){
+        const movement = new THREE.Vector3();
+
+        switch (command) {
             case 'up':
-                front.crossVectors(right, new THREE.Vector3(0,1,0));
-                return (front.multiplyScalar(-diff * delta));
+                movement.add(front.clone().multiplyScalar(-1));
+                break;
+
             case 'down':
-                front.crossVectors(right, new THREE.Vector3(0,1,0));
-                return (front.multiplyScalar(diff * delta));
+                movement.add(front.clone());
+                break;
+
             case 'left':
-                return (right.multiplyScalar(-diff * delta));
+                movement.add(right.clone().multiplyScalar(-1));
+                break;
+
             case 'right':
-                return (right.multiplyScalar(diff * delta));
-            default:
+                movement.add(right.clone());
+                break;
+
+            case 'up-left':
+                movement.add(front.clone().multiplyScalar(-1));
+                movement.add(right.clone().multiplyScalar(-1));
+                break;
+
+            case 'up-right':
+                movement.add(front.clone().multiplyScalar(-1));
+                movement.add(right.clone());
+                break;
+
+            case 'down-left':
+                movement.add(front.clone());
+                movement.add(right.clone().multiplyScalar(-1));
+                break;
+
+            case 'down-right':
+                movement.add(front.clone());
+                movement.add(right.clone());
                 break;
         }
-        return (right.multiplyScalar(0))
-    }
+
+        return movement.normalize().multiplyScalar(diff * delta);
+    };
 
     const updateTarget = () => {
         const controls = controlsRef.current;
@@ -173,9 +219,13 @@ export function CameraController({command, floor, zoom} : CameraProps) {
         <>
             <OrbitControls 
                 ref={controlsRef}
+                enabled={orbitEnabled}
                 enablePan={false}
                 enableZoom={false}
                 enableRotate={true}
+                mouseButtons={{
+                    RIGHT: THREE.MOUSE.ROTATE
+                }}
                 minPolarAngle={0}
                 maxPolarAngle={Math.PI * 4 / 9}
             />

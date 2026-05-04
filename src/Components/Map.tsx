@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 export type MapRef = {
     placeModelAtPosition : (model : string, pos : THREE.Vector3, q: THREE.Quaternion) => void;
     placeHologramAtPosition : (model : string, pos : THREE.Vector3, q: THREE.Quaternion, placeable : Boolean) => void;
+    deactivateHologram : () => void;
 }
 
 type MapProps = {
@@ -144,52 +145,33 @@ export const Map = forwardRef<MapRef, MapProps>(({ floors }, ref) => {
                 : new THREE.Color(1, 0, 0);
                 
                 
-            if (hologram && hologram.name === model){
-                hologram.traverse(child => {
-                    if ((child as THREE.Mesh).isMesh){
-                        const mesh = (child as THREE.Mesh);
-                        const mat = mesh.material;
-                        let matches = false;
-                        if (Array.isArray(mat)){
-                            mat.forEach(m => {
-                                let c = new THREE.Color(0,0,0);
-                                if ('color' in m){
-                                    c = m.color as THREE.Color;
+            if (hologram && hologram.name === model) {
+                hologram.traverse((child: any) => {
+                    if (child.isMesh) {
+                        const mesh = child as THREE.Mesh;
+
+                        if (Array.isArray(mesh.material)) {
+                            mesh.material.forEach((mat: any) => {
+                                if ('color' in mat) {
+                                    mat.color.copy(desiredColor);
                                 }
-                                if (c.getHex() === desiredColor.getHex()) {
-                                    updateHologram(pos,q);
-                                    matches = true;
-                                    return;
-                                }
-                                else {
-                                    m.blendColor = desiredColor.clone();
-                                }
-                            })
-                        }
-                        else {
-                            let c = new THREE.Color(0,0,0);
-                            if ('color' in mat){
-                                c = mat.color as THREE.Color;
+                            });
+                        } else {
+                            const mat: any = mesh.material;
+                            if ('color' in mat) {
+                                mat.color.copy(desiredColor);
                             }
-                            if (mat.blendColor.getHex() === desiredColor.getHex()){
-                                updateHologram(pos,q);
-                                matches = true;
-                                return;
-                            }
-                            else {
-                                mat.blendColor = desiredColor.clone();
-                            }
-                        }
-                        if (matches){
-                            return;
                         }
                     }
-                })
-                updateHologram(pos,q); //now that it has a corrected material
+                });
+
+                updateHologram(pos, q);
+                return;
             }
 
 
             const mod = modelCache.current[model].clone();
+            mod.name = model;
 
             mod.position.copy(pos);
             mod.quaternion.copy(q);
@@ -229,6 +211,9 @@ export const Map = forwardRef<MapRef, MapProps>(({ floors }, ref) => {
             
         
             
+        },
+        deactivateHologram: () => {
+            setHologram(undefined);
         }
     }));
 

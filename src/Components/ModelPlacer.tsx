@@ -31,6 +31,9 @@ export function ModelPlacer({ mapRef, modelName }: ModelPlacerProps) {
         rayCaster.current.setFromCamera(pointer.current, camera);
         const intersects = rayCaster.current.intersectObjects(scene.children, true);
 
+        if (modelName === "" && mapRef.current){
+            mapRef.current.deactivateHologram();
+        }
         if (intersects.length > 0 && mapRef.current) {
             //calculate rotation
             const intersection = intersects[0];
