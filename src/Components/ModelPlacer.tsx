@@ -43,7 +43,10 @@ export function ModelPlacer({ mapRef, modelName }: ModelPlacerProps) {
 
             const up = new THREE.Vector3(0,0,1);
             const quaternion = new THREE.Quaternion().setFromUnitVectors(up, normal!);
-            if (intersects[0].object.name === 'walls_destructible'){
+
+            const isDestructible = intersects[0].object.userData.destructible === true || intersects[0].object.name.toLowerCase().includes("destructible");
+
+            if (isDestructible){
                 mapRef.current.placeHologramAtPosition(modelName, intersects[0].point, quaternion, true);
             }
             else {
@@ -76,7 +79,9 @@ export function ModelPlacer({ mapRef, modelName }: ModelPlacerProps) {
 
 
             if (intersects.length > 0 && mapRef.current) {
-                if (intersects[0].object.name === 'walls_destructible'){
+                const isDestructible = intersects[0].object.userData.destructible === true || intersects[0].object.name.toLowerCase().includes("destructible");
+
+                if (isDestructible){
 
                     //calculate rotation
                     const intersection = intersects[0];

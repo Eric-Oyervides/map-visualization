@@ -316,6 +316,7 @@ export function Visualization () {
         )}
         <button onClick={() => goFloorUp()} style={{position: "absolute", right: "2%", top: "10%"}}>Floor up</button>
         <button onClick={() => goFloorDown()} style={{position: "absolute", right: "2%", top: "19%"}}>Floor down</button>
+        <button onClick={() => mapRef.current?.applyDestruction()} style={{position: "absolute", right: "2%", top: "28%"}}>Activate</button>
 
         <div
             style={{
